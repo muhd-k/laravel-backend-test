@@ -17,4 +17,8 @@ class Product extends Model
         'unit_price_cents',
         'amount_sold'
     ];
+
+    public function user() {
+        return $this->belongsTo(User::class);
+    }
 }
