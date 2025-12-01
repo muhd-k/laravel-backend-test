@@ -2,12 +2,51 @@
 
 namespace App\Http\Controllers;
 
+/**
+ * @OA\SecurityScheme(
+ *     securityScheme="bearerAuth",
+ *     type="http",
+ *     scheme="bearer",
+ *     bearerFormat="JWT"
+ * )
+ */
+/**
+ * @OA\Info(
+ *     title="Laravel API",
+ *     version="1.0.0",
+ *     description="API documentation for Laravel application"
+ * )
+ * @OA\SecurityScheme(
+ *     securityScheme="bearerAuth",
+ *     type="http",
+ *     scheme="bearer",
+ *     bearerFormat="JWT"
+ * )
+ */
+
+
 use App\Models\User;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
+    /**
+     * @OA\Post(
+     *     path="/api/register",
+     *     summary="Register a new user",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name","email","password"},
+     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="email", type="string"),
+     *             @OA\Property(property="password", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="User registered")
+     * )
+     */
     public function register(Request $request)
     {
         $fields = $request->validate([
@@ -26,6 +65,25 @@ class AuthController extends Controller
         ];
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/login",
+     *     summary="Login user",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email","password"},
+     *             @OA\Property(property="email", type="string"),
+     *             @OA\Property(property="password", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Login successful", @OA\JsonContent(
+     *         @OA\Property(property="user", type="object"),
+     *         @OA\Property(property="token", type="string")
+     *     )),
+     *     @OA\Response(response=401, description="Invalid credentials")
+     * )
+     */
     public function login(Request $request)
     {
         $request->validate([
@@ -33,18 +91,29 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
-        if (!$token = auth('api')->JWTAuth::attempt($request->only('email', 'password'))) {
+        if (!$token = JWTAuth::attempt($request->only('email', 'password'))) {
             return [
                 'message' => 'The provided credentials are incorrect.'
             ];
         }
 
         return [
-            'user' => auth('api')->user(),
+            'user' => JWTAuth::user(),
             'token' => $token
         ];
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/logout",
+     *     summary="Logout user",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Response(response=200, description="Logged out successfully", @OA\JsonContent(
+     *         @OA\Property(property="message", type="string", example="You are logged out.")
+     *     )),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function logout(Request $request)
     {
         JWTAuth::invalidate(JWTAuth::getToken());
@@ -53,5 +122,4 @@ class AuthController extends Controller
             'message' => 'You are logged out.'
         ];
     }
-
 }
